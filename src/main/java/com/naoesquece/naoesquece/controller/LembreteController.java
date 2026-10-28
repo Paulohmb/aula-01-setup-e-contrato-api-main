@@ -1,7 +1,10 @@
 package com.naoesquece.naoesquece.controller;
 
+import com.naoesquece.naoesquece.dto.LembreteRequestDTO;
+import com.naoesquece.naoesquece.dto.LembreteResponseDTO;
 import com.naoesquece.naoesquece.model.Lembrete;
 import com.naoesquece.naoesquece.model.Status;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,26 +22,36 @@ public class LembreteController {
     private final AtomicLong geradorId = new AtomicLong(1);
 
     @PostMapping
-    public ResponseEntity<Lembrete> cadastrar(@RequestBody Lembrete lembrete) {
+    public ResponseEntity<LembreteResponseDTO> cadastrar(@Valid @RequestBody LembreteRequestDTO request) {
+        Lembrete lembrete = new Lembrete();
         lembrete.setId(geradorId.getAndIncrement());
-        if (lembrete.getStatus() == null) {
-            lembrete.setStatus(Status.PENDENTE);
-        }
+        lembrete.setTitulo(request.getTitulo());
+        lembrete.setDescricao(request.getDescricao());
+        lembrete.setDataHora(request.getDataHora());
+        lembrete.setPrioridade(request.getPrioridade());
+        lembrete.setStatus(Status.PENDENTE);
+        lembrete.setCriadoEm(LocalDateTime.now());
+        lembrete.setAtualizadoEm(LocalDateTime.now());
+
         lembretes.add(lembrete);
-        return ResponseEntity.status(HttpStatus.CREATED).body(lembrete);
+        return ResponseEntity.status(HttpStatus.CREATED).body(LembreteResponseDTO.fromEntity(lembrete));
     }
 
     @GetMapping
-    public ResponseEntity<List<Lembrete>> listar() {
-        return ResponseEntity.ok(lembretes);
+    public ResponseEntity<List<LembreteResponseDTO>> listar() {
+        List<LembreteResponseDTO> dtos = new ArrayList<>();
+        for (Lembrete l : lembretes) {
+            dtos.add(LembreteResponseDTO.fromEntity(l));
+        }
+        return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Lembrete> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<LembreteResponseDTO> buscarPorId(@PathVariable Long id) {
         Optional<Lembrete> lembreteOpt = buscarLembretePorId(id);
 
         if (lembreteOpt.isPresent()) {
-            return ResponseEntity.ok(lembreteOpt.get());
+            return ResponseEntity.ok(LembreteResponseDTO.fromEntity(lembreteOpt.get()));
         } else {
             return ResponseEntity.notFound().build();
         }
