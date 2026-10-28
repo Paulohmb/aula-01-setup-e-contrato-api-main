@@ -4,6 +4,7 @@ import com.naoesquece.naoesquece.dto.LembreteRequestDTO;
 import com.naoesquece.naoesquece.dto.LembreteResponseDTO;
 import com.naoesquece.naoesquece.exception.ResourceNotFoundException;
 import com.naoesquece.naoesquece.model.Lembrete;
+import com.naoesquece.naoesquece.model.Prioridade;
 import com.naoesquece.naoesquece.model.Status;
 import com.naoesquece.naoesquece.repository.LembreteRepository;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,44 @@ public class LembreteService {
 
     public List<LembreteResponseDTO> listarTodos() {
         List<Lembrete> lembretes = lembreteRepository.findAll();
+        List<LembreteResponseDTO> dtos = new ArrayList<>();
+        for (Lembrete l : lembretes) {
+            dtos.add(LembreteResponseDTO.fromEntity(l));
+        }
+        return dtos;
+    }
+
+    public List<LembreteResponseDTO> listarComFiltros(Status status, Prioridade prioridade) {
+        List<Lembrete> resultado;
+        if (status != null && prioridade != null) {
+            resultado = lembreteRepository.findByStatusAndPrioridade(status, prioridade);
+        } else if (status != null) {
+            resultado = lembreteRepository.findByStatus(status);
+        } else if (prioridade != null) {
+            resultado = lembreteRepository.findByPrioridade(prioridade);
+        } else {
+            resultado = lembreteRepository.findAll();
+        }
+
+        List<LembreteResponseDTO> dtos = new ArrayList<>();
+        for (Lembrete l : resultado) {
+            dtos.add(LembreteResponseDTO.fromEntity(l));
+        }
+        return dtos;
+    }
+
+    public List<LembreteResponseDTO> buscarPorPeriodo(LocalDateTime inicio, LocalDateTime fim) {
+        List<Lembrete> lembretes = lembreteRepository.findByDataHoraBetween(inicio, fim);
+        List<LembreteResponseDTO> dtos = new ArrayList<>();
+        for (Lembrete l : lembretes) {
+            dtos.add(LembreteResponseDTO.fromEntity(l));
+        }
+        return dtos;
+    }
+
+    public List<LembreteResponseDTO> listarAtrasados() {
+        List<Lembrete> lembretes = lembreteRepository.findByStatusAndDataHoraBefore(
+                Status.PENDENTE, LocalDateTime.now());
         List<LembreteResponseDTO> dtos = new ArrayList<>();
         for (Lembrete l : lembretes) {
             dtos.add(LembreteResponseDTO.fromEntity(l));
